@@ -25,7 +25,9 @@ cleans them up.
   a mounted disk, or over ssh (Linux or Windows); a note is left in place and every move is recorded;
   `tuck restore` brings it back.
 - **Web panel**: the report with checkboxes, plans with approve / reject buttons, and the records.
-- **Rules for AI agents** to paste into `CLAUDE.md` / `AGENTS.md`: [docs/agents.md](docs/agents.md).
+- **Also an agent skill**: [skills/tuckaway](skills/tuckaway/SKILL.md) teaches Claude Code (or any agent that reads
+  Agent Skills) to tag what it creates, check before touching others' data, explain suggestions and propose
+  plans, but never approve. Or paste the short rules in [docs/agents.md](docs/agents.md) into `CLAUDE.md` / `AGENTS.md`.
 - **English or Chinese** interface; Python 3.8+ standard library only; Linux.
 
 ## Quick start
@@ -36,6 +38,7 @@ ln -s "$PWD/tuckaway/tuck" ~/.local/bin/tuck   # or: pip install --user ./tuckaw
 tuck init                                      # then edit ~/.config/tuckaway/config.toml
 tuck scan                                      # nightly from cron is a good idea
 tuck report                                    # or: tuck serve (web panel)
+ln -s "$PWD/tuckaway/skills/tuckaway" ~/.claude/skills/tuckaway   # optional: the agent skill for Claude Code
 ```
 
 ## Commands

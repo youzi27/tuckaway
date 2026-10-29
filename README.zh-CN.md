@@ -20,7 +20,9 @@
 - **安全归档**：tar + zstd/gzip，两边核对条目数和 SHA-256；存到本地目录、移动硬盘，或用 ssh 传到另一台机器（Linux 或 Windows）；
   原位置留说明，每次转移都有记录；`tuck restore` 一条命令恢复。
 - **网页面板**：带勾选框的报告、计划的批准 / 拒绝按钮、记录。
-- **给 AI agent 的规则**，贴进 `CLAUDE.md` / `AGENTS.md` 即可：[docs/agents.md](docs/agents.md)。
+- **也是一个 agent skill**：[skills/tuckaway](skills/tuckaway/SKILL.md) 教 Claude Code（以及支持 Agent Skills 的其他 agent）
+  建目录时挂标签、动别人的东西前先检查、解释建议并生成计划，但从不自己批准。也可以把 [docs/agents.md](docs/agents.md)
+  里的简短规则贴进 `CLAUDE.md` / `AGENTS.md`。
 - **中英文界面**（配置里 `lang = "zh"` 显示中文）；只用 Python 3.8+ 标准库；支持 Linux。
 
 ## 快速开始
@@ -31,6 +33,7 @@ ln -s "$PWD/tuckaway/tuck" ~/.local/bin/tuck   # 或者：pip install --user ./t
 tuck init                                      # 然后修改 ~/.config/tuckaway/config.toml
 tuck scan                                      # 建议每晚用 cron 定时跑
 tuck report                                    # 或者：tuck serve（网页面板）
+ln -s "$PWD/tuckaway/skills/tuckaway" ~/.claude/skills/tuckaway   # 可选：给 Claude Code 装上 agent skill
 ```
 
 ## 命令
