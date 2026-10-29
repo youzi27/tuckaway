@@ -1,6 +1,7 @@
 """Reports: plain text for the console, HTML for files and the web panel."""
 
 import html
+import json
 import os
 import shutil
 
@@ -177,8 +178,8 @@ grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0}
 .stat b{display:block;font-size:22px}.card{background:var(--card);border:1px solid var(--line);
 border-radius:10px;padding:12px 14px;margin:8px 0}.card .top{display:flex;gap:10px;align-items:baseline;
 flex-wrap:wrap}.path{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all}
-.size{font-weight:600;min-width:64px}.act{font-size:12px;padding:1px 8px;border-radius:99px;color:#fff}
-.act.delete{background:var(--del)}.act.archive{background:var(--arc)}.chip{font-size:12px;background:var(--chip);
+.size{font-weight:600;min-width:64px}.act{font-size:12px;padding:0 6px;border-radius:4px;border:1px solid}
+.act.delete{color:var(--del)}.act.archive{color:var(--arc)}.sel{font-size:13px;margin-left:10px;padding:2px 10px}.chip{font-size:12px;background:var(--chip);
 padding:1px 8px;border-radius:99px;color:var(--muted)}ul{margin:6px 0 0;padding-left:20px}
 li.r{color:var(--ok)}li.w{color:var(--warn)}li.r span,li.w span{color:var(--fg)}
 .auto{font-size:13px;color:var(--muted);margin-top:4px}table{border-collapse:collapse;width:100%}
@@ -192,21 +193,39 @@ padding:8px 12px;margin:10px 0}input[type=checkbox]{transform:scale(1.2);margin-
 """
 
 
+PANEL_JS = """<script>
+function tuckSel(){var b=document.querySelectorAll("input[name=ids]:checked"),s=0;
+ b.forEach(function(x){s+=+x.dataset.bytes});return [b.length,s]}
+function tuckHuman(n){var u=["B","K","M","G","T"],i=0;while(n>=1024&&i<4){n/=1024;i++}return n.toFixed(i?1:0)+u[i]}
+function tuckFmt(m,r){return m.replace("{n}",r[0]).replace("{size}",tuckHuman(r[1]))}
+function tuckUpd(){var e=document.getElementById("tucksel");if(e)e.textContent=tuckFmt(%(sel)s,tuckSel())}
+function tuckAll(a){var b=document.querySelectorAll("input[name=ids][data-action="+a+"]"),on=false;
+ b.forEach(function(x){if(!x.checked)on=true});b.forEach(function(x){x.checked=on});tuckUpd()}
+function tuckConfirm(){var r=tuckSel();if(!r[0]){alert(%(none)s);return false}return confirm(tuckFmt(%(confirm)s,r))}
+document.addEventListener("change",tuckUpd);
+</script>"""
+
+
 def esc(s):
     return html.escape(str(s), quote=True)
 
 
-def page(title, body, nav=None):
-    return ("<!doctype html><html lang='zh'><head><meta charset='utf-8'>"
-            "<meta name='viewport' content='width=device-width,initial-scale=1'><title>%s</title><style>%s</style>"
-            "</head><body><main>%s%s</main></body></html>" % (esc(title), CSS, nav or "", body))
+def js_str(s):
+    return json.dumps(s, ensure_ascii=False)
 
 
-def item_card(d, it, selectable=False):
+def page(title, body, nav=None, head=""):
+    return ("<!doctype html><html><head><meta charset='utf-8'>"
+            "<meta name='viewport' content='width=device-width,initial-scale=1'>%s<title>%s</title><style>%s</style>"
+            "</head><body><main>%s%s</main></body></html>" % (head, esc(title), CSS, nav or "", body))
+
+
+def item_card(d, it, selectable=False, checked=False):
     sh = d["short"]
     paths = it["paths"]
     p0 = esc(sh(paths[0])) + (esc(t("and_more", n=len(paths) - 1)) if len(paths) > 1 else "")
-    box = "<input type='checkbox' name='ids' value='%s'>" % esc(it["id"]) if selectable else ""
+    box = "<input type='checkbox' name='ids' value='%s' data-bytes='%d' data-action='%s'%s>" % (
+        esc(it["id"]), it["bytes"], esc(it["action"]), " checked" if checked else "") if selectable else ""
     lis = "".join("<li class='r'><span>%s</span></li>" % esc(r) for r in it["reasons"])
     lis += "".join("<li class='w'><span>%s</span></li>" % esc(w) for w in it["warnings"])
     if it.get("rebuild"):
@@ -228,7 +247,7 @@ def item_card(d, it, selectable=False):
         lis, "<div class='auto'>%s</div>" % esc(auto) if auto else "")
 
 
-def html_report(d, panel=False, token=""):
+def html_report(d, panel=False, token="", can_run=True):
     sc = d["scan"]
     parts = ["<h1>tuckaway</h1><div class='muted'>%s</div>" % esc(
         t("rep_scan", when=util.fmt_time(sc["finished"]), dur=duration(sc), files=sc["files"],
@@ -258,11 +277,20 @@ def html_report(d, panel=False, token=""):
     for action in ACTION_ORDER:
         its = [i for i in d["items"] if i["action"] == action]
         if its:
-            parts.append("<h2>%s</h2>" % esc(t("sec_" + action)))
+            sel = ("<button type='button' class='sel' onclick=\"tuckAll('%s')\">%s</button>" % (
+                action, esc(t("btn_select_all")))) if panel else ""
+            parts.append("<h2>%s%s</h2>" % (esc(t("sec_" + action)), sel))
             parts.extend(item_card(d, it, selectable=panel) for it in its)
     if panel:
-        parts.append("<div class='bar'><button class='primary' type='submit'>%s</button><span class='muted'>%s"
-                     "</span></div></form>" % (esc(t("btn_make_plan")), esc(t("hint_make_plan"))))
+        dis = "" if can_run else " disabled"
+        parts.append(
+            "<div class='bar'><button class='danger' type='submit' name='go' value='run'%s "
+            "onclick='return tuckConfirm()'>%s</button><button type='submit' name='go' value='plan'>%s</button>"
+            "<span class='muted' id='tucksel'>%s</span></div><p class='muted'>%s</p></form>" % (
+                dis, esc(t("btn_run_selected")), esc(t("btn_plan_only")), esc(t("sel_count", n=0, size="0B")),
+                esc(t("hint_make_plan"))))
+        parts.append(PANEL_JS % {"sel": js_str(t("sel_count")), "none": js_str(t("sel_none")),
+                                 "confirm": js_str(t("confirm_run"))})
     if d["auto"]:
         rows = "".join("<tr><td>%s</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (
             esc(a["rule"]), a["n"], esc(util.human(a["bytes"])), esc(t("on") if a["enabled"] else t("off")),

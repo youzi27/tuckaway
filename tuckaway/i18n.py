@@ -148,8 +148,25 @@ MESSAGES = {
     "n_items": ("{n} 项", "{n} items"),
     "growth_label": ("增长", "Growth"),
     "since": ("自 {when}", "since {when}"),
-    "btn_make_plan": ("用勾选的项生成计划", "Make a plan of the selected items"),
-    "hint_make_plan": ("生成计划不会动任何文件；批准之后才执行。", "Making a plan touches nothing; it runs only after approval."),
+    "btn_run_selected": ("执行所选（删除 / 归档）", "Run the selected (delete / archive)"),
+    "btn_plan_only": ("只生成计划，稍后再批准", "Only make a plan, approve later"),
+    "btn_select_all": ("全选本节", "select all"),
+    "sel_count": ("已选 {n} 项，共 {size}", "{n} selected, {size}"),
+    "sel_none": ("请先勾选要处理的项。", "Select something first."),
+    "confirm_run": ("确定执行勾选的 {n} 项（共 {size}）吗？\n删除的不能恢复；归档的可以用 tuck restore 恢复。",
+                    "Run the {n} selected items ({size})?\nDeleted data cannot be recovered; archived data can "
+                    "(tuck restore)."),
+    "confirm_plan": ("确定执行这个计划里勾选的项吗？删除的不能恢复。", "Run the selected items of this plan? "
+                     "Deletions cannot be undone."),
+    "hint_make_plan": ("每个路径执行前都会再查一遍：路径没了、有进程在用、或者被改过，就跳过。每一项都会记下来。",
+                       "Every path is checked again right before it is touched (gone, in use or changed: skipped). "
+                       "Everything is recorded."),
+    "web_computing": ("正在分析磁盘，大约半分钟，页面会自动刷新……", "Analysing the disk (about half a minute); this "
+                      "page refreshes itself ..."),
+    "web_stale": ("下面是 {when} 的结果，正在后台更新。", "Results from {when}; updating in the background."),
+    "web_as_of": ("结果更新于 {when}。", "Results from {when}."),
+    "web_refresh": ("重新分析", "refresh"),
+    "web_running": ("正在执行，页面每 3 秒自动刷新。", "Running; this page refreshes every 3 seconds."),
     "st_pending": ("待批准", "pending"),
     "st_approved": ("已批准", "approved"),
     "st_running": ("执行中", "running"),
