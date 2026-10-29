@@ -4,6 +4,9 @@ English | [简体中文](README.zh-CN.md)
 
 **Find files nobody uses any more on a shared machine, explain why, and archive or delete them after a person approves.**
 
+It tackles storage bloat in the AI era, when coding agents create builds, runs and scratch files faster than anyone
+cleans them up.
+
 ## Features
 
 - **One scan, whole picture**: size, last change and daily growth of every big directory.
