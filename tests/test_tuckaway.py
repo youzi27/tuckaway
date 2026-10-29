@@ -85,6 +85,16 @@ inline = { a = 1, b = true }
         self.assertEqual(d["archive"]["ssh"]["port"], 2222)
         self.assertEqual(d["rules"]["custom"]["x"]["inline"], {"a": 1, "b": True})
 
+    def test_template_parses_the_same_with_both_readers(self):
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tuckaway",
+                            "config_template.toml")
+        with open(path) as f:
+            text = f.read()
+        mini = config._MiniToml(text).parse()
+        self.assertEqual(mini["lang"], "en")
+        self.assertEqual(mini["archive"]["ssh"]["shell"], "posix")
+        self.assertEqual(config.loads_toml(text), mini)
+
     def test_glob(self):
         g = util.Globs(["/a/*/c", "/x/**"])
         self.assertTrue(g.match("/a/b/c"))

@@ -2,10 +2,17 @@
 
 English | [简体中文](README.zh-CN.md)
 
+[![tests](https://github.com/youzi27/tuckaway/actions/workflows/test.yml/badge.svg)](https://github.com/youzi27/tuckaway/actions/workflows/test.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)
+![dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg)
+
 **Find files nobody uses any more on a shared machine, explain why, and archive or delete them after a person approves.**
 
 It tackles storage bloat in the AI era, when coding agents create builds, runs and scratch files faster than anyone
 cleans them up.
+
+![The tuckaway web panel: suggestions with their evidence, and one button to run the selected](docs/screenshot.png)
 
 ## Features
 
@@ -30,15 +37,20 @@ cleans them up.
   plans, but never approve. Or paste the short rules in [docs/agents.md](docs/agents.md) into `CLAUDE.md` / `AGENTS.md`.
 - **English or Chinese** interface; Python 3.8+ standard library only; Linux.
 
+## Install
+
+| How | Command | You get |
+|---|---|---|
+| Claude Code plugin | `/plugin install tuckaway --marketplace youzi27/tuckaway` | the skill and the `tuck` command |
+| Agent skill ([skills.sh](https://skills.sh)) | `npx skills add youzi27/tuckaway` | the skill, for Claude Code, Codex, Cursor and more |
+| Command line | `pip install --user git+https://github.com/youzi27/tuckaway` | the `tuck` command |
+
 ## Quick start
 
 ```bash
-git clone https://github.com/youzi27/tuckaway.git
-ln -s "$PWD/tuckaway/tuck" ~/.local/bin/tuck   # or: pip install --user ./tuckaway
-tuck init                                      # then edit ~/.config/tuckaway/config.toml
-tuck scan                                      # nightly from cron is a good idea
-tuck report                                    # or: tuck serve (web panel)
-ln -s "$PWD/tuckaway/skills/tuckaway" ~/.claude/skills/tuckaway   # optional: the agent skill for Claude Code
+tuck init      # writes ~/.config/tuckaway/config.toml: what to scan, where archives go, what to keep
+tuck scan      # nightly from cron is a good idea
+tuck report    # or: tuck serve (web panel)
 ```
 
 ## Commands

@@ -2,9 +2,16 @@
 
 [English](README.md) | 简体中文
 
+[![tests](https://github.com/youzi27/tuckaway/actions/workflows/test.yml/badge.svg)](https://github.com/youzi27/tuckaway/actions/workflows/test.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)
+![dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg)
+
 **在共用的机器上找出没人用的文件，说清楚为什么，经人批准后归档或删除。**
 
 它解决 AI 时代的存储膨胀问题：AI agent 产生编译目录、实验结果和临时文件的速度，远远快过人去清理。
+
+![tuckaway 网页面板：每条建议附证据，勾选后一键执行](docs/screenshot-zh.png)
 
 ## 功能
 
@@ -25,15 +32,20 @@
   里的简短规则贴进 `CLAUDE.md` / `AGENTS.md`。
 - **中英文界面**（配置里 `lang = "zh"` 显示中文）；只用 Python 3.8+ 标准库；支持 Linux。
 
+## 安装
+
+| 方式 | 命令 | 装上什么 |
+|---|---|---|
+| Claude Code 插件 | `/plugin install tuckaway --marketplace youzi27/tuckaway` | skill 和 `tuck` 命令 |
+| Agent skill（[skills.sh](https://skills.sh)） | `npx skills add youzi27/tuckaway` | skill，支持 Claude Code、Codex、Cursor 等 |
+| 命令行 | `pip install --user git+https://github.com/youzi27/tuckaway` | `tuck` 命令 |
+
 ## 快速开始
 
 ```bash
-git clone https://github.com/youzi27/tuckaway.git
-ln -s "$PWD/tuckaway/tuck" ~/.local/bin/tuck   # 或者：pip install --user ./tuckaway
-tuck init                                      # 然后修改 ~/.config/tuckaway/config.toml
-tuck scan                                      # 建议每晚用 cron 定时跑
-tuck report                                    # 或者：tuck serve（网页面板）
-ln -s "$PWD/tuckaway/skills/tuckaway" ~/.claude/skills/tuckaway   # 可选：给 Claude Code 装上 agent skill
+tuck init      # 写一份配置 ~/.config/tuckaway/config.toml：扫描哪些目录、归档放哪里、哪些不动
+tuck scan      # 建议每晚用 cron 定时跑
+tuck report    # 或者：tuck serve（网页面板）
 ```
 
 ## 命令

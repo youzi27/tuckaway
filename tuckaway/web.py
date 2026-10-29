@@ -189,9 +189,9 @@ def make_handler(panel):
                 body += "<div class='note'>%s</div>" % esc(t("web_agent_note", why=panel.blocked))
             note = t("web_stale", when=util.fmt_time(panel.cache_at)) if panel.computing else \
                 t("web_as_of", when=util.fmt_time(panel.cache_at))
-            body += "<div class='muted' style='font-size:13px'>%s <a href='/?refresh=1'>%s</a></div>" % (
+            note = "<div class='muted' style='font-size:13px'>%s <a href='/?refresh=1'>%s</a></div>" % (
                 esc(note), esc(t("web_refresh")))
-            body += report.html_report(d, panel=True, token=panel.token, can_run=not panel.blocked)
+            body += report.html_report(d, panel=True, token=panel.token, can_run=not panel.blocked, note=note)
             return report.page("tuckaway", body, panel.nav())
 
         def plans_page(self):

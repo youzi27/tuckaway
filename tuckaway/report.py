@@ -112,7 +112,7 @@ def text(d, max_items=40):
     out.append(t("rep_scan", when=util.fmt_time(sc["finished"]), dur=duration(sc), files=sc["files"],
                  size=util.human(sc["bytes"])))
     for k in d["disks"]:
-        out.append(t("rep_disk", root=k["root"], total=util.human(k["total"]), used=util.human(k["used"]),
+        out.append(t("rep_disk", root=d["short"](k["root"]), total=util.human(k["total"]), used=util.human(k["used"]),
                      pct=k["pct"], free=util.human(k["free"])))
     g = d["growth"]
     if g:
@@ -247,15 +247,15 @@ def item_card(d, it, selectable=False, checked=False):
         lis, "<div class='auto'>%s</div>" % esc(auto) if auto else "")
 
 
-def html_report(d, panel=False, token="", can_run=True):
+def html_report(d, panel=False, token="", can_run=True, note=""):
     sc = d["scan"]
-    parts = ["<h1>tuckaway</h1><div class='muted'>%s</div>" % esc(
+    parts = ["<h1>tuckaway</h1><div class='muted'>%s</div>%s" % (esc(
         t("rep_scan", when=util.fmt_time(sc["finished"]), dur=duration(sc), files=sc["files"],
-          size=util.human(sc["bytes"])))]
+          size=util.human(sc["bytes"]))), note)]
     stats = []
     for k in d["disks"]:
         stats.append("<div class='stat'><span class='muted'>%s</span><b>%.0f%%</b>%s</div>" % (
-            esc(k["root"]), k["pct"], esc(t("free_of", free=util.human(k["free"]), total=util.human(k["total"])))))
+            esc(d["short"](k["root"])), k["pct"], esc(t("free_of", free=util.human(k["free"]), total=util.human(k["total"])))))
     stats.append("<div class='stat'><span class='muted'>%s</span><b>%s</b>%s</div>" % (
         esc(t("sec_delete")), esc(util.human(d["delete_total"])),
         esc(t("n_items", n=len([i for i in d["items"] if i["action"] == "delete"])))))

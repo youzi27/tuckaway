@@ -1,0 +1,15 @@
+{
+  "name": "tuckaway",
+  "description": "tuckaway: disk cleanup for shared machines in the AI era (skill + tuck command).",
+  "owner": {
+    "name": "youzi27",
+    "url": "https://github.com/youzi27"
+  },
+  "plugins": [
+    {
+      "name": "tuckaway",
+      "source": "./",
+      "description": "Find unused files and agent leftovers, explain why, archive or delete after the user approves."
+    }
+  ]
+}

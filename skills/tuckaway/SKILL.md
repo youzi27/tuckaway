@@ -8,7 +8,9 @@ description: Keep a shared disk from filling up with the `tuck` command. Use it 
 `tuck` finds files nobody uses any more, explains why with evidence, and archives or deletes them only after
 the user approves. You prepare and explain; the user decides.
 
-If `tuck` is not on PATH, tell the user it is not installed (https://github.com/youzi27/tuckaway) and stop.
+`tuck` is on PATH when the tuckaway Claude Code plugin is enabled. If it is missing, ask the user before installing
+it: `pip install --user git+https://github.com/youzi27/tuckaway` (Python 3.8+, Linux). Without a configuration it
+scans the home directory and archives to `~/tuckaway-archive`; `tuck init` writes a configuration to edit.
 
 ## Rules
 

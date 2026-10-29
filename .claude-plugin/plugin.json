@@ -1,0 +1,11 @@
+{
+  "name": "tuckaway",
+  "displayName": "tuckaway",
+  "version": "0.1.0",
+  "description": "Disk cleanup for shared machines in the AI era: find unused files and agent leftovers, explain why with evidence, and archive or delete them only after the user approves. Ships the tuck command.",
+  "author": { "name": "youzi27", "url": "https://github.com/youzi27" },
+  "homepage": "https://github.com/youzi27/tuckaway",
+  "repository": "https://github.com/youzi27/tuckaway",
+  "license": "MIT",
+  "keywords": ["disk", "storage", "cleanup", "archive", "agents", "research"]
+}

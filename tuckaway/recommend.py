@@ -136,6 +136,8 @@ class Context:
                     return os.path.basename(a)
         r = self.root_of(p)
         parts = os.path.relpath(p, r).split("/") if p != r else []
+        if parts and parts[0].startswith("."):     # a tool's hidden directory: ~/.cache, ~/.vscode-server
+            return parts[0]
         if len(parts) >= self.min_depth:
             return parts[self.min_depth - 1]
         return parts[-1] if parts else os.path.basename(r) or r
@@ -296,9 +298,11 @@ class Context:
             if rule.group:
                 groups[rule.id].append(h)
                 continue
-            reasons = [rule.custom_reason or t("r_rule_" + rule.id, default=rule.id),
-                       t("r_cold", date=util.fmt_date(h["newest"], self.now),
-                         days=int(util.days_since(h["newest"], self.now))), t("r_noproc")]
+            age = util.days_since(h["newest"], self.now)
+            reasons = [rule.custom_reason or t("r_rule_" + rule.id, default=rule.id)]
+            if age >= 1:
+                reasons.append(t("r_cold", date=util.fmt_date(h["newest"], self.now), days=int(age)))
+            reasons.append(t("r_noproc"))
             warnings = []
             conf = rule.confidence
             if rule.category == "regen":
