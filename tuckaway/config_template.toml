@@ -2,7 +2,7 @@
 # Paths may start with ~. Globs: * stays inside one path component, ** crosses components.
 # 路径可以用 ~ 开头。通配符：* 不跨目录，** 可以跨目录。
 
-lang = "zh"                          # zh | en
+lang = "en"                          # en | zh
 state_dir = "~/.local/share/tuckaway"   # index, plans, records / 索引、计划和记录
 
 [scan]

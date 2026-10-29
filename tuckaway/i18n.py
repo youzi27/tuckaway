@@ -1,6 +1,6 @@
 """Messages in Chinese and English. `lang = "zh"` or `"en"` in the configuration picks one."""
 
-LANG = "zh"
+LANG = "en"
 
 
 def set_lang(lang):

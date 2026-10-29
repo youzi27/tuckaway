@@ -17,7 +17,7 @@ CONFIG_ENV = "TUCK_CONFIG"
 DEFAULT_CONFIG = "~/.config/tuckaway/config.toml"
 
 DEFAULTS = {
-    "lang": "zh",
+    "lang": "en",
     "state_dir": "~/.local/share/tuckaway",
     "scan": {
         # Directories to scan. Each is scanned without crossing into other file systems.
