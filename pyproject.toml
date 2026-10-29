@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tuckaway"
+version = "0.1.0"
+description = "Find files nobody uses any more, explain why, and tuck them away safely (archive or delete after approval)."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.8"
+dependencies = []
+keywords = ["disk", "cleanup", "archive", "storage", "research", "agents"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: POSIX :: Linux",
+  "Environment :: Console",
+  "Topic :: System :: Archiving",
+]
+
+[project.scripts]
+tuck = "tuckaway.cli:main"
+
+[tool.setuptools]
+packages = ["tuckaway"]
+
+[tool.setuptools.package-data]
+tuckaway = ["config_template.toml"]

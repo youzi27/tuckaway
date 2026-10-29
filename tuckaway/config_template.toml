@@ -1,0 +1,65 @@
+# tuckaway configuration / tuckaway 配置
+# Paths may start with ~. Globs: * stays inside one path component, ** crosses components.
+# 路径可以用 ~ 开头。通配符：* 不跨目录，** 可以跨目录。
+
+lang = "zh"                          # zh | en
+state_dir = "~/.local/share/tuckaway"   # index, plans, records / 索引、计划和记录
+
+[scan]
+roots = ["~"]                        # what to scan; add "/tmp" to find agent and conda leftovers / 扫描哪些目录
+exclude = []                         # skipped entirely, e.g. ["~/mnt/**"] / 完全跳过的路径
+one_filesystem = true                # do not cross into other file systems / 不跨文件系统
+store_min_mb = 256                   # directories at least this big are indexed / 至少这么大的目录才记进索引
+keep_scans = 60                      # how many scans to keep for growth / 保留多少次扫描用来算增长
+
+[refs]
+# Text files are searched for paths, so that what a script or paper still names is not suggested.
+# 扫描时读文本文件里写的路径：脚本或论文还写着的目录不会被建议挪走。
+enabled = true
+max_kb = 512
+
+[policy]
+recent_days = 7                      # changed (or programs run) this recently: never suggested / 一周内用过的不动
+cold_days = 14                       # unchanged this long: suggested for the archive / 两周没改过才建议归档
+min_candidate_mb = 1024              # smallest directory worth suggesting / 小于这个的不单独建议
+candidate_min_depth = 2              # how far below a root a whole directory may be suggested / 离根目录至少几层
+keep = []                            # never suggested, e.g. toolchains: ["~/tools/**"] / 永远不建议的路径
+project_roots = []                   # directories whose children are projects, e.g. ["~/projects"] / 按项目分组用
+
+[archive]
+backend = "local"                    # local | ssh | none
+compress = "auto"                    # auto (zstd if installed, else gzip) | zstd | gzip | none
+local_dir = "~/tuckaway-archive"     # local archives; may be a mounted disk / 本地归档目录，也可以是挂载的移动硬盘
+tmp_dir = "~/.cache/tuckaway/tmp"    # room for one archive while it is copied over ssh / ssh 传输时的临时目录
+stub_suffix = ".TUCKED.txt"          # note left in place of an archived directory / 原位置留下的说明文件
+legacy_stub_suffixes = []            # stubs written by older tools, e.g. [".ON_EXTERNAL_DISK.txt"]
+copy_records = true                  # also copy records.md next to the archives / 记录也复制一份到归档位置
+markdown_also = []                   # more Markdown tables to append a row to / 额外追加记录的 Markdown 表格
+
+[archive.ssh]                        # used when backend = "ssh" / 归档到另一台机器
+host = ""
+user = ""
+port = 22
+key = ""                             # e.g. "~/.ssh/id_ed25519"
+remote_dir = ""                      # e.g. "/data/archive" or "D:/archive"
+shell = "posix"                      # posix (Linux/macOS, sha256sum) | cmd (Windows, certutil)
+
+[auto]
+# Rules whose findings `tuck auto` may delete without approval. `tuck rules` shows which are recommended.
+# 允许 tuck auto 不经批准直接删除的规则。tuck rules 会列出建议开启的规则和原因。
+enabled = false
+rules = []                           # e.g. ["pycache", "pip-cache", "conda-tmp", "vscode-old-server"]
+max_gb_per_run = 50
+
+[web]
+host = "127.0.0.1"
+port = 8765
+
+[rules]
+disable = []                         # built-in rules to switch off, by id / 关掉的内置规则
+# Your own rules / 自定义规则:
+# [rules.custom.old-datasets]
+# glob = "~/data/tmp-*"
+# category = "garbage"               # garbage | cache | regen
+# reason = "temporary datasets of the preprocessing step"
+# min_age = 7
