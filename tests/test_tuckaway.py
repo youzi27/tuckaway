@@ -124,6 +124,19 @@ class TestRecommend(Base):
         for p in ("new", "linked", "named", "kept"):
             self.assertNotIn(r + "/proj/" + p, arch, p)
 
+    def test_kept_glob_inside_keeps_the_parent_whole(self):
+        r = self.root
+        for t in ("src-a", "src-b"):
+            write(r + "/proj/%s/build/emu" % t, 4096)
+            write(r + "/proj/%s/out/log.txt" % t, 4096)
+            age_tree(r + "/proj/" + t, 40)
+        self.cfg["policy"]["keep"] = [r + "/proj/src-*/build"]
+        self.scan()
+        arch = self.paths(self.items(), "archive")
+        self.assertNotIn(r + "/proj/src-a", arch)
+        self.assertNotIn(r + "/proj/src-a/build", arch)
+        self.assertIn(r + "/proj/src-a/out", arch)
+
     def test_old_reference_is_a_warning(self):
         r = self.root
         write(r + "/proj/old/data.bin", 4096)

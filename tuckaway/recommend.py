@@ -53,6 +53,7 @@ class Context:
             [r for r in self.roots if r in ("/tmp", "/var/tmp")]
         self.rules = rules.by_id(rules.load_rules(cfg))
         self.dirs = {r["path"]: r for r in con.execute("SELECT * FROM dirs WHERE scan_id=?", (self.sid,))}
+        self.dir_index = util.PathIndex([(d, None) for d in self.dirs])
         self.children = defaultdict(list)
         for p in self.dirs:
             parent = os.path.dirname(p)
@@ -102,8 +103,10 @@ class Context:
         return bool(self.keep_globs) and any(self.keep_globs.match(a) for a in [p] + util.ancestors(p))
 
     def contains_kept(self, p):
-        """A kept path (a literal policy.keep entry or a keep/paper tag) lies inside p."""
+        """A kept path (a policy.keep entry, literal or glob, or a keep/paper tag) lies inside p."""
         if any(k != p and util.under(k, p) for k in self.keep_literals):
+            return True
+        if self.keep_globs and any(d != p and self.keep_globs.match(d) for d, _ in self.dir_index.under(p)):
             return True
         return any(k != p and util.under(k, p) and tg["category"] in ("keep", "paper") for k, tg in self.tags.items())
 
