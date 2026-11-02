@@ -24,8 +24,9 @@ class NoScan(RuntimeError):
     pass
 
 
-def item_id(action, paths):
-    return hashlib.sha1((action + "\0" + "\0".join(sorted(paths))).encode()).hexdigest()[:6]
+def item_id(paths):
+    """Stable across runs and independent of the action, so the user can pick archive or delete for any item."""
+    return hashlib.sha1("\0".join(sorted(paths)).encode()).hexdigest()[:6]
 
 
 class Context:
@@ -250,7 +251,7 @@ class Context:
     def add_item(self, paths, size, action, category, source, confidence, reasons, warnings, newest, auto=None,
                  rebuild=None):
         it = {
-            "id": item_id(action, paths), "paths": paths, "bytes": size, "action": action, "category": category,
+            "id": item_id(paths), "paths": paths, "bytes": size, "action": action, "category": category,
             "source": source, "confidence": confidence, "reasons": reasons, "warnings": warnings,
             "newest": newest, "project": self.project_of(paths[0]), "auto": auto or {"recommended": False},
             "rebuild": rebuild,
@@ -373,13 +374,14 @@ class Context:
                 project_level = self.is_project_level(p, d)
                 if tag and tag["category"] in ("keep", "paper"):
                     if project_level or p == tag["path"]:
-                        self.kept.append({"path": p, "bytes": row["bytes"],
+                        self.kept.append({"path": p, "bytes": row["bytes"], "locked": True,
                                           "blockers": [t("b_tag_keep", owner=tag["owner"] or "?",
                                                          note=tag["note"] or tag["category"])]})
                     continue
                 if self.kept_by_config(p):
                     if project_level:
-                        self.kept.append({"path": p, "bytes": row["bytes"], "blockers": [t("b_keep_cfg")]})
+                        self.kept.append({"path": p, "bytes": row["bytes"], "locked": True,
+                                          "blockers": [t("b_keep_cfg")]})
                     continue
                 if d >= self.min_depth and not self.contains_protected(p):
                     frozen = bool(tag and tag["category"] == "frozen")
@@ -426,7 +428,34 @@ class Context:
             if not any(util.under(w["path"], x["path"]) for x in pruned):
                 pruned.append(w)
         self.watch = sorted(pruned, key=lambda w: -w["bytes"])
+        self.watch_items = [self.extra_item(w, "watch") for w in self.watch]
+        self.kept_items = [self.extra_item(k, "kept") for k in self.kept]
         return self
+
+    def extra_item(self, entry, kind):
+        """An item for a directory that is turning cold or kept, so the user can still choose to act on it."""
+        p = entry["path"]
+        row = self.dirs.get(p)
+        newest = row["newest"] if row else 0
+        if kind == "watch":
+            reasons = [t("r_watch", date=util.fmt_date(newest, self.now),
+                         cold=util.fmt_date(entry["cold_on"], self.now))]
+            warnings = []
+        else:
+            reasons, warnings = [], list(entry["blockers"])
+        return {"id": item_id([p]), "paths": [p], "bytes": entry["bytes"], "action": "archive", "category": kind,
+                "source": kind, "confidence": "low", "reasons": reasons, "warnings": warnings, "newest": newest,
+                "project": self.project_of(p), "auto": {"recommended": False}, "rebuild": None,
+                "locked": bool(entry.get("locked"))}
+
+    def all_items(self):
+        """Suggestions first, then the watched and kept directories, each id once."""
+        out, seen = [], set()
+        for it in self.items + self.watch_items + self.kept_items:
+            if it["id"] not in seen:
+                seen.add(it["id"])
+                out.append(it)
+        return out
 
 
 def compute(con, cfg, live=True):

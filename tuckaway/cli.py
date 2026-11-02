@@ -160,12 +160,14 @@ def cmd_plan(cfg, a):
         items = ctx.items
         if a.ids:
             ids = set(a.ids.split(","))
-            items = [i for i in items if i["id"] in ids]
+            items = [i for i in ctx.all_items() if i["id"] in ids and not i.get("locked")]
         elif a.action:
             items = [i for i in items if i["action"] == a.action]
         elif not a.all:
             print(t("c_plan_pick"))
             return 1
+        if a.as_action:
+            items = [plans.with_action(i, a.as_action) for i in items]
         pid = plans.create(con, items, actor(), a.note or "", ctx=ctx)
     p = plans.get(con, pid)
     print(t("c_plan_created", id=pid, n=len(p["items"]), size=util.human(sum(i["bytes"] for i in p["items"]))))
@@ -311,7 +313,9 @@ def parser():
     q = pp.add_parser("new")
     q.add_argument("--ids")
     q.add_argument("--all", action="store_true")
-    q.add_argument("--action", choices=("delete", "archive"))
+    q.add_argument("--action", choices=("delete", "archive"), help="only the suggestions with this action")
+    q.add_argument("--as", dest="as_action", choices=("delete", "archive"),
+                   help="do this to every chosen item, whatever was suggested")
     q.add_argument("--note")
     q = pp.add_parser("add")
     q.add_argument("action", choices=("delete", "archive"))

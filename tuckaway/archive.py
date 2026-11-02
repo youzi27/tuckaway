@@ -297,6 +297,11 @@ def archive_path(con, cfg, path, project, plan_id, actor, log=print):
     rel = archive_name(cfg, path, project, comp, now)
     with transfer_lock(cfg, log):
         work = back.work_file(cfg, rel)
+        # the archive is written next to the original first: there must be room for it
+        free = shutil.disk_usage(os.path.dirname(work)).free
+        if free < size0 + (1 << 30):
+            raise ArchiveError(t("e_space", where=os.path.dirname(work), need=util.human(size0),
+                                 free=util.human(free)))
         try:
             log(t("m_packing", path=path, size=util.human(size0)))
             tar_create(path, work, comp)

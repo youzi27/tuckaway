@@ -148,14 +148,41 @@ MESSAGES = {
     "n_items": ("{n} 项", "{n} items"),
     "growth_label": ("增长", "Growth"),
     "since": ("自 {when}", "since {when}"),
-    "btn_run_selected": ("执行所选（删除 / 归档）", "Run the selected (delete / archive)"),
-    "btn_plan_only": ("只生成计划，稍后再批准", "Only make a plan, approve later"),
+    "btn_archive_sel": ("归档所选", "Archive the selected"),
+    "btn_delete_sel": ("删除所选", "Delete the selected"),
+    "hint_actions": ("归档 = 打包存到 {where}，两边校验无误后再删掉本地，以后可以用 tuck restore 恢复。"
+                     "删除 = 直接删掉，不留副本。不管建议是什么，勾选的每一项都按你点的按钮处理；"
+                     "执行前每个路径都会再查一遍，正在用的或扫描后又改过的会跳过。",
+                     "Archive = pack it, store it at {where}, check both copies, then remove it here; tuck restore "
+                     "brings it back. Delete = remove it, no copy kept. Every selected item gets the action of the "
+                     "button you press; each path is checked again first, and what is in use or changed since the "
+                     "scan is skipped."),
+    "confirm_archive": ("确定归档勾选的 {n} 项（共 {size}）吗？\n先打包存到 {where}，两边校验无误后再删掉本地；"
+                        "以后可以用 tuck restore 恢复。\n大目录要传很久。",
+                        "Archive the {n} selected items ({size})?\nThey are packed and stored at {where}, both "
+                        "copies are checked, then they are removed here; tuck restore brings them back.\n"
+                        "Big directories take long."),
+    "confirm_delete": ("确定直接删除勾选的 {n} 项（共 {size}）吗？\n不留副本，删了就找不回来。",
+                       "Delete the {n} selected items ({size})?\nNo copy is kept; this cannot be undone."),
+    "tag_delete": ("建议删除", "delete?"),
+    "tag_archive": ("建议归档", "archive?"),
+    "tag_watch": ("快变冷", "turning cold"),
+    "tag_kept": ("不建议动", "kept"),
+    "cat_watch": ("快要变冷", "turning cold"),
+    "cat_kept": ("不建议动", "kept"),
+    "r_watch": ("{date} 改过，{cold} 起才算冷数据", "modified {date}; cold from {cold}"),
+    "hint_watch": ("还不到两周没动，暂不建议。确定不用了也可以现在就归档或删除。",
+                   "Not two weeks unused yet, so not suggested; you can still archive or delete it now."),
+    "hint_kept": ("下面列的原因说明有人可能还在用，动之前请先确认。标了保留的不能勾选，要动先去掉标记（tuck untag）。",
+                  "The reasons below say someone may still use these: make sure before you act. Items tagged keep "
+                  "cannot be selected; untag them first (tuck untag)."),
+    "locked_hint": ("已标记保留；要动它先去掉保留标记（tuck untag）", "tagged keep; untag it first (tuck untag)"),
+    "w_delete_instead": ("建议的是归档或保留，你选了直接删除：不留副本", "not suggested for deletion: no copy is kept"),
+    "e_space": ("{where} 空间不够：打包需要约 {need}，只剩 {free}；原目录保留",
+                "not enough room in {where}: packing needs about {need}, {free} free; original kept"),
     "btn_select_all": ("全选本节", "select all"),
     "sel_count": ("已选 {n} 项，共 {size}", "{n} selected, {size}"),
     "sel_none": ("请先勾选要处理的项。", "Select something first."),
-    "confirm_run": ("确定执行勾选的 {n} 项（共 {size}）吗？\n删除的不能恢复；归档的可以用 tuck restore 恢复。",
-                    "Run the {n} selected items ({size})?\nDeleted data cannot be recovered; archived data can "
-                    "(tuck restore)."),
     "confirm_plan": ("确定执行这个计划里勾选的项吗？删除的不能恢复。", "Run the selected items of this plan? "
                      "Deletions cannot be undone."),
     "hint_make_plan": ("每个路径执行前都会再查一遍：路径没了、有进程在用、或者被改过，就跳过。每一项都会记下来。",
@@ -229,7 +256,7 @@ MESSAGES = {
     "v_outside": ("不在扫描范围内", "outside the scanned roots"),
     "v_toplevel": ("是扫描根目录或家目录这样的顶层目录", "a top-level directory (a root or home)"),
     "v_protected": ("受保护的路径", "a protected path"),
-    "v_changed": ("生成计划后又被改过（{date}）", "modified after the plan was made ({date})"),
+    "v_changed": ("扫描或生成计划后又被改过（{date}），没动它", "modified after the scan or the plan ({date}); left alone"),
     "m_skip": ("跳过 {path}：{why}", "skipped {path}: {why}"),
     "m_deleted": ("已删除 {path}（{size}）", "deleted {path} ({size})"),
     "m_archived": ("已归档 {path} -> {where}", "archived {path} -> {where}"),

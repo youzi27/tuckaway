@@ -30,6 +30,17 @@ def short(path):
     return "~" + path[len(home):] if util.under(path, home) else path
 
 
+def archive_target(cfg):
+    """Where archives go, for the button and the confirmation; empty when archiving is not configured."""
+    a = cfg["archive"]
+    if a["backend"] == "ssh" and a["ssh"]["host"]:
+        s = a["ssh"]
+        return "%s%s:%s" % (s["user"] + "@" if s["user"] else "", s["host"], s["remote_dir"])
+    if a["backend"] == "local":
+        return short(a["local_dir"])
+    return ""
+
+
 class Panel:
     def __init__(self, cfg):
         self.cfg = cfg
@@ -150,9 +161,14 @@ def make_handler(panel):
                     if not cache:
                         return self._redirect("/")
                     ctx = cache[0]
-                    items = [i for i in ctx.items if i["id"] in ids]
+                    go = (form.get("go") or [""])[0]
+                    if go not in ("archive", "delete"):
+                        raise plans.PlanError(t("sel_none"))
+                    # the user's choice of action applies to every selected item; kept-by-tag items stay out
+                    items = [plans.with_action(i, go) for i in ctx.all_items()
+                             if i["id"] in ids and not i.get("locked")]
                     pid = plans.create(con, items, who, ctx=ctx)
-                    if (form.get("go") or [""])[0] == "run" and not panel.blocked:
+                    if not panel.blocked:
                         plans.approve(con, pid, who)
                         panel.spawn_run(pid, who)
                     return self._redirect("/plan/" + pid)
@@ -191,7 +207,8 @@ def make_handler(panel):
                 t("web_as_of", when=util.fmt_time(panel.cache_at))
             note = "<div class='muted' style='font-size:13px'>%s <a href='/?refresh=1'>%s</a></div>" % (
                 esc(note), esc(t("web_refresh")))
-            body += report.html_report(d, panel=True, token=panel.token, can_run=not panel.blocked, note=note)
+            body += report.html_report(d, panel=True, token=panel.token, can_run=not panel.blocked, note=note,
+                                       where=archive_target(panel.cfg))
             return report.page("tuckaway", body, panel.nav())
 
         def plans_page(self):
@@ -218,7 +235,8 @@ def make_handler(panel):
             if live:
                 head += "<div class='note'>%s</div>" % esc(t("web_running"))
             pending = p["status"] == "pending"
-            cards = "".join(report.item_card(d, it, selectable=pending, checked=pending) for it in p["items"])
+            cards = "".join(report.item_card(d, it, selectable=pending, checked=pending, planned=True)
+                            for it in p["items"])
             body = head
             for it in p["items"]:
                 for path, st, msg in it.get("results", []):

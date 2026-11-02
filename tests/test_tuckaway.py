@@ -208,6 +208,42 @@ class TestPlans(Base):
         self.assertEqual(p["items"][0]["status"], "skipped")
         self.assertTrue(os.path.exists(r + "/proj/old/a.bin"))
 
+    def test_user_chooses_delete_for_an_archive_suggestion(self):
+        r = self.root
+        write(r + "/proj/old/a.bin", 4096)
+        age_tree(r + "/proj/old", 40)
+        self.scan()
+        ctx = recommend.compute(self.con, self.cfg)
+        it = [i for i in ctx.all_items() if i["paths"] == [r + "/proj/old"]][0]
+        self.assertEqual(it["action"], "archive")
+        chosen = plans.with_action(it, "delete")
+        self.assertEqual(chosen["action"], "delete")
+        self.assertTrue(chosen["warnings"])
+        pid = plans.create(self.con, [chosen], "test", ctx=ctx)
+        plans.approve(self.con, pid, "test")
+        plans.run(self.con, self.cfg, pid, "test", log=lambda m: None)
+        self.assertFalse(os.path.exists(r + "/proj/old"))
+        self.assertFalse(os.path.exists(r + "/proj/old" + self.cfg["archive"]["stub_suffix"]))
+        self.assertIsNone(archive.find_record(self.con, r + "/proj/old"))
+
+    def test_watched_and_kept_dirs_are_items_too(self):
+        r = self.root
+        write(r + "/proj/warm/a.bin", 4096)
+        age_tree(r + "/proj/warm", 10)                         # between recent (7) and cold (14) days
+        write(r + "/proj/kept/a.bin", 4096)
+        age_tree(r + "/proj/kept", 40)
+        self.cfg["policy"]["keep"] = [r + "/proj/kept"]
+        self.cfg["policy"]["project_roots"] = [r + "/proj"]
+        self.scan()
+        ctx = recommend.compute(self.con, self.cfg)
+        watch = {i["paths"][0]: i for i in ctx.watch_items}
+        kept = {i["paths"][0]: i for i in ctx.kept_items}
+        self.assertIn(r + "/proj/warm", watch)
+        self.assertIn(r + "/proj/kept", kept)
+        self.assertTrue(kept[r + "/proj/kept"]["locked"])
+        ids = {i["id"] for i in ctx.all_items()}
+        self.assertIn(watch[r + "/proj/warm"]["id"], ids)
+
     def test_gzip_backend(self):
         self.cfg["archive"]["compress"] = "gzip"
         r = self.root

@@ -68,11 +68,23 @@ def manual_item(con, cfg, action, path):
     if not os.path.lexists(p):
         raise PlanError(t("v_missing"))
     return {
-        "id": recommend.item_id(action, [p]), "paths": [p], "bytes": card["bytes"], "action": action,
+        "id": recommend.item_id([p]), "paths": [p], "bytes": card["bytes"], "action": action,
         "category": "manual", "source": "manual", "confidence": "low" if card["blockers"] else "medium",
         "reasons": card["facts"], "warnings": card["blockers"] + card["warnings"], "newest": card["newest"],
         "project": card["project"], "auto": {"recommended": False}, "rebuild": None,
     }
+
+
+def with_action(item, action):
+    """The item with the action the user chose. Deleting what was suggested for the archive (or what the tool
+    would keep) gets a warning that no copy is left."""
+    it = dict(item)
+    if action != it["action"] or it.get("category") in ("watch", "kept"):
+        if action == "delete" and it["action"] != "delete":
+            it["warnings"] = [t("w_delete_instead")] + list(it.get("warnings", []))
+        it["suggested"] = it["action"]
+        it["action"] = action
+    return it
 
 
 def get(con, pid):

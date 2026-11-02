@@ -41,7 +41,9 @@ scans the home directory and archives to `~/tuckaway-archive`; `tuck init` write
    tuck plan new --ids <id,id,...>          # or: tuck plan add delete|archive <path>
    ```
    Then tell them to approve it themselves: `tuck approve <plan>` in their own terminal, or in the panel
-   (`tuck serve` started in their own terminal; "Run the selected" asks for confirmation and runs).
+   (`tuck serve` started in their own terminal: they tick items and press "Archive the selected" (pack, store,
+   verify, then remove here) or "Delete the selected" (remove, no copy); both ask for confirmation).
+   On the command line the action can be chosen too: `tuck plan new --ids <ids> --as archive|delete`.
 4. After they approved, you may run it: `tuck run <plan>` (archives can take long: run it detached and report
    the result from the log, `tuck plan show <plan>`).
 

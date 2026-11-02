@@ -70,8 +70,8 @@ def build(con, cfg, ctx):
         "delete_total": sum(i["bytes"] for i in items if i["action"] == "delete"),
         "archive_total": sum(i["bytes"] for i in items if i["action"] == "archive"),
         "auto": auto_suggestions(ctx),
-        "watch": ctx.watch[:12],
-        "kept": ctx.kept[:12],
+        "watch_items": ctx.watch_items[:12],
+        "kept_items": ctx.kept_items[:12],
         "short": ctx.short,
         "now": ctx.now,
         "cfg": cfg,
@@ -144,18 +144,18 @@ def text(d, max_items=40):
             out.append("      " + a["why"])
         if any(not a["enabled"] for a in d["auto"]):
             out.append("  " + t("auto_howto", rules=", ".join('"%s"' % a["rule"] for a in d["auto"])))
-    if d["watch"]:
+    if d["watch_items"]:
         out.append("")
         out.append("== " + t("sec_watch") + " ==")
-        for w in d["watch"]:
-            out.append("  %8s  %s  %s" % (util.human(w["bytes"]), d["short"](w["path"]),
-                                          t("cold_on", date=util.fmt_date(w["cold_on"], d["now"]))))
-    if d["kept"]:
+        for w in d["watch_items"]:
+            out.append("[%s] %8s  %s  %s" % (w["id"], util.human(w["bytes"]), d["short"](w["paths"][0]),
+                                             "; ".join(w["reasons"])))
+    if d["kept_items"]:
         out.append("")
         out.append("== " + t("sec_kept") + " ==")
-        for k in d["kept"]:
-            out.append("  %8s  %s" % (util.human(k["bytes"]), d["short"](k["path"])))
-            for b in k["blockers"]:
+        for k in d["kept_items"]:
+            out.append("[%s] %8s  %s" % (k["id"], util.human(k["bytes"]), d["short"](k["paths"][0])))
+            for b in k["warnings"]:
                 out.append("      - " + b)
     out.append("")
     out.append(t("next_steps"))
@@ -179,7 +179,7 @@ grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0}
 border-radius:10px;padding:12px 14px;margin:8px 0}.card .top{display:flex;gap:10px;align-items:baseline;
 flex-wrap:wrap}.path{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;word-break:break-all}
 .size{font-weight:600;min-width:64px}.act{font-size:12px;padding:0 6px;border-radius:4px;border:1px solid}
-.act.delete{color:var(--del)}.act.archive{color:var(--arc)}.sel{font-size:13px;margin-left:10px;padding:2px 10px}.chip{font-size:12px;background:var(--chip);
+.act.delete{color:var(--del)}.act.archive{color:var(--arc)}.act.watch{color:var(--warn)}.act.kept{color:var(--muted)}.sel{font-size:13px;margin-left:10px;padding:2px 10px}.chip{font-size:12px;background:var(--chip);
 padding:1px 8px;border-radius:99px;color:var(--muted)}ul{margin:6px 0 0;padding-left:20px}
 li.r{color:var(--ok)}li.w{color:var(--warn)}li.r span,li.w span{color:var(--fg)}
 .auto{font-size:13px;color:var(--muted);margin-top:4px}table{border-collapse:collapse;width:100%}
@@ -199,9 +199,10 @@ function tuckSel(){var b=document.querySelectorAll("input[name=ids]:checked"),s=
 function tuckHuman(n){var u=["B","K","M","G","T"],i=0;while(n>=1024&&i<4){n/=1024;i++}return n.toFixed(i?1:0)+u[i]}
 function tuckFmt(m,r){return m.replace("{n}",r[0]).replace("{size}",tuckHuman(r[1]))}
 function tuckUpd(){var e=document.getElementById("tucksel");if(e)e.textContent=tuckFmt(%(sel)s,tuckSel())}
-function tuckAll(a){var b=document.querySelectorAll("input[name=ids][data-action="+a+"]"),on=false;
+function tuckAll(a){var b=document.querySelectorAll("input[name=ids][data-section="+a+"]:not([disabled])"),on=false;
  b.forEach(function(x){if(!x.checked)on=true});b.forEach(function(x){x.checked=on});tuckUpd()}
-function tuckConfirm(){var r=tuckSel();if(!r[0]){alert(%(none)s);return false}return confirm(tuckFmt(%(confirm)s,r))}
+var tuckMsg=%(confirm)s;
+function tuckConfirm(k){var r=tuckSel();if(!r[0]){alert(%(none)s);return false}return confirm(tuckFmt(tuckMsg[k],r))}
 document.addEventListener("change",tuckUpd);
 </script>"""
 
@@ -220,12 +221,23 @@ def page(title, body, nav=None, head=""):
             "</head><body><main>%s%s</main></body></html>" % (head, esc(title), CSS, nav or "", body))
 
 
-def item_card(d, it, selectable=False, checked=False):
+def section_of(it):
+    return it["category"] if it.get("category") in ("watch", "kept") else it.get("suggested", it["action"])
+
+
+def item_card(d, it, selectable=False, checked=False, planned=False):
+    """One item. In a report the tag shows what tuckaway suggests; in a plan (planned=True) what will be done."""
     sh = d["short"]
     paths = it["paths"]
     p0 = esc(sh(paths[0])) + (esc(t("and_more", n=len(paths) - 1)) if len(paths) > 1 else "")
-    box = "<input type='checkbox' name='ids' value='%s' data-bytes='%d' data-action='%s'%s>" % (
-        esc(it["id"]), it["bytes"], esc(it["action"]), " checked" if checked else "") if selectable else ""
+    sec = section_of(it)
+    locked = it.get("locked")
+    box = ""
+    if selectable:
+        box = "<input type='checkbox' name='ids' value='%s' data-bytes='%d' data-section='%s'%s%s>" % (
+            esc(it["id"]), it["bytes"], esc(sec), " checked" if checked and not locked else "",
+            (" disabled title='%s'" % esc(t("locked_hint"))) if locked else "")
+    tag_cls, tag_txt = (it["action"], t("act_" + it["action"])) if planned else (sec, t("tag_" + sec))
     lis = "".join("<li class='r'><span>%s</span></li>" % esc(r) for r in it["reasons"])
     lis += "".join("<li class='w'><span>%s</span></li>" % esc(w) for w in it["warnings"])
     if it.get("rebuild"):
@@ -241,13 +253,13 @@ def item_card(d, it, selectable=False, checked=False):
     return ("<div class='card'><div class='top'><label>%s<span class='act %s'>%s</span></label>"
             "<span class='size'>%s</span><span class='path'>%s</span>%s</div>"
             "<div class='muted' style='font-size:13px'>%s</div><ul>%s</ul>%s</div>") % (
-        box, esc(it["action"]), esc(t("act_" + it["action"])), esc(util.human(it["bytes"])), p0, status,
+        box, esc(tag_cls), esc(tag_txt), esc(util.human(it["bytes"])), p0, status,
         esc(t("item_meta", cat=t("cat_" + it["category"]), src=it["source"], conf=_conf(it["confidence"]),
               project=it["project"]) + " · id " + it["id"]),
         lis, "<div class='auto'>%s</div>" % esc(auto) if auto else "")
 
 
-def html_report(d, panel=False, token="", can_run=True, note=""):
+def html_report(d, panel=False, token="", can_run=True, note="", where=""):
     sc = d["scan"]
     parts = ["<h1>tuckaway</h1><div class='muted'>%s</div>%s" % (esc(
         t("rep_scan", when=util.fmt_time(sc["finished"]), dur=duration(sc), files=sc["files"],
@@ -274,23 +286,30 @@ def html_report(d, panel=False, token="", can_run=True, note=""):
                 "+" if b >= 0 else "-", esc(util.human(abs(b))), esc(d["short"](p))) for p, b in g["rows"])))
     if panel:
         parts.append("<form method='post' action='/plan/new'><input type='hidden' name='t' value='%s'>" % esc(token))
-    for action in ACTION_ORDER:
-        its = [i for i in d["items"] if i["action"] == action]
+    sections = [(a, [i for i in d["items"] if i["action"] == a]) for a in ACTION_ORDER]
+    sections += [("watch", d["watch_items"]), ("kept", d["kept_items"])]
+    for sec, its in sections:
         if its:
             sel = ("<button type='button' class='sel' onclick=\"tuckAll('%s')\">%s</button>" % (
-                action, esc(t("btn_select_all")))) if panel else ""
-            parts.append("<h2>%s%s</h2>" % (esc(t("sec_" + action)), sel))
+                sec, esc(t("btn_select_all")))) if panel else ""
+            parts.append("<h2>%s%s</h2>" % (esc(t("sec_" + sec)), sel))
+            if sec in ("watch", "kept"):
+                parts.append("<p class='muted'>%s</p>" % esc(t("hint_" + sec)))
             parts.extend(item_card(d, it, selectable=panel) for it in its)
     if panel:
         dis = "" if can_run else " disabled"
+        adis = dis if where else " disabled title='%s'" % esc(t("e_no_backend"))
         parts.append(
-            "<div class='bar'><button class='danger' type='submit' name='go' value='run'%s "
-            "onclick='return tuckConfirm()'>%s</button><button type='submit' name='go' value='plan'>%s</button>"
+            "<div class='bar'><button class='primary' type='submit' name='go' value='archive'%s "
+            "onclick=\"return tuckConfirm('archive')\">%s</button>"
+            "<button class='danger' type='submit' name='go' value='delete'%s "
+            "onclick=\"return tuckConfirm('delete')\">%s</button>"
             "<span class='muted' id='tucksel'>%s</span></div><p class='muted'>%s</p></form>" % (
-                dis, esc(t("btn_run_selected")), esc(t("btn_plan_only")), esc(t("sel_count", n=0, size="0B")),
-                esc(t("hint_make_plan"))))
+                adis, esc(t("btn_archive_sel")), dis, esc(t("btn_delete_sel")),
+                esc(t("sel_count", n=0, size="0B")), esc(t("hint_actions", where=where or "-"))))
         parts.append(PANEL_JS % {"sel": js_str(t("sel_count")), "none": js_str(t("sel_none")),
-                                 "confirm": js_str(t("confirm_run"))})
+                                 "confirm": js_str({"archive": t("confirm_archive", where=where or "-"),
+                                                    "delete": t("confirm_delete")})})
     if d["auto"]:
         rows = "".join("<tr><td>%s</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (
             esc(a["rule"]), a["n"], esc(util.human(a["bytes"])), esc(t("on") if a["enabled"] else t("off")),
@@ -299,14 +318,4 @@ def html_report(d, panel=False, token="", can_run=True, note=""):
         if any(not a["enabled"] for a in d["auto"]):
             parts.append("<div class='note'>%s</div>" % esc(
                 t("auto_howto", rules=", ".join('"%s"' % a["rule"] for a in d["auto"]))))
-    if d["watch"]:
-        parts.append("<h2>%s</h2><table>%s</table>" % (esc(t("sec_watch")), "".join(
-            "<tr><td class='size'>%s</td><td class='path'>%s</td><td>%s</td></tr>" % (
-                esc(util.human(w["bytes"])), esc(d["short"](w["path"])),
-                esc(t("cold_on", date=util.fmt_date(w["cold_on"], d["now"])))) for w in d["watch"])))
-    if d["kept"]:
-        parts.append("<h2>%s</h2><table>%s</table>" % (esc(t("sec_kept")), "".join(
-            "<tr><td class='size'>%s</td><td><div class='path'>%s</div><div class='muted'>%s</div></td></tr>" % (
-                esc(util.human(k["bytes"])), esc(d["short"](k["path"])), esc("；".join(k["blockers"])))
-            for k in d["kept"])))
     return "".join(parts)
